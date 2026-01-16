@@ -25,24 +25,13 @@ public class TspController {
     @GetMapping("/")
     public String home(Model model) {
         FormData defaultData = FormData.builder()
-                .warehouseAddress("Bưu điện Trung tâm Sài Gòn")
+                .warehouseAddress("")
                 .startTime("08:00")
-                .deliveryPoints(Arrays.asList(
-                        createPoint("Sân bay Tân Sơn Nhất", "09:00", "11:00"),
-                        createPoint("Chợ Bến Thành", "10:00", "12:00"),
-                        createPoint("Dinh Độc Lập", "13:00", "15:00")))
+                .deliveryPoints(new ArrayList<>())
                 .mode("distance")
                 .build();
         model.addAttribute("form_data", defaultData);
         return "index";
-    }
-
-    private DeliveryPointInput createPoint(String addr, String earliest, String latest) {
-        DeliveryPointInput p = new DeliveryPointInput();
-        p.setAddress(addr);
-        p.setEarliest(earliest);
-        p.setLatest(latest);
-        return p;
     }
 
     @PostMapping("/")
