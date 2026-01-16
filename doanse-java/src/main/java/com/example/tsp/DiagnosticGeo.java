@@ -14,7 +14,9 @@ public class DiagnosticGeo {
                 "dien bien phu da nang, Vietnam"
         };
 
-        HttpClient client = HttpClient.newHttpClient();
+        HttpClient client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
 
         for (String address : testAddresses) {
             System.out.println("\nTesting: " + address);
