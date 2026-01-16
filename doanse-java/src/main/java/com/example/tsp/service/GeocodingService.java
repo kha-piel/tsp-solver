@@ -18,15 +18,13 @@ public class GeocodingService {
     private final String NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 
     public AddressData getCoordsFromAddress(String address) {
-        // 1. Try exact
+
         AddressData result = queryNominatim(address);
 
-        // 2. Try adding ", Vietnam" if not present
         if (result == null && !containsVietnam(address)) {
             result = queryNominatim(address + ", Vietnam");
         }
 
-        // 3. Try adding comma before city names (heuristic)
         if (result == null) {
             String heuristic = addCommaBeforeCity(address);
             if (!heuristic.equals(address)) {
@@ -52,7 +50,7 @@ public class GeocodingService {
         for (String city : cities) {
             int idx = lower.lastIndexOf(city);
             if (idx > 0) {
-                // If found and not preceded by comma
+
                 char charBefore = address.charAt(idx - 1);
                 if (charBefore != ',' && charBefore != ' ') {
                     // e.g. "phudanang" -> ignore
@@ -74,7 +72,6 @@ public class GeocodingService {
                 .queryParam("format", "json")
                 .queryParam("limit", 1);
 
-        // Ensure encoding is handled by build().toUriString()
         String url = builder.build().toUriString();
 
         try {

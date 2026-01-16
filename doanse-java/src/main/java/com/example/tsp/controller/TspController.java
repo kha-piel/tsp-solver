@@ -45,7 +45,6 @@ public class TspController {
         List<DeliveryPointInput> deliveryPointsInput = new ArrayList<>();
         List<SolverService.TimeWindow> timeWindows = new ArrayList<>();
 
-        // Parse dynamic form keys point_address_X
         List<Integer> indices = allParams.keySet().stream()
                 .filter(k -> k.startsWith("point_address_"))
                 .map(k -> Integer.parseInt(k.split("_")[2]))
@@ -107,31 +106,15 @@ public class TspController {
                 List<AddressData> finalPath = new ArrayList<>();
                 for (int i = 0; i < result.path.size(); i++) {
                     AddressData ad = allAddressesData.get(result.path.get(i));
-                    // Clone to avoid reference issues if point visited twice? (TSP usually visits
-                    // once, except start/end)
-                    // But here start/end are same object in list.
-                    // We need to attach schedule info. Ideally return new objects or DTOs.
-                    // Simplified: Just use AddressData setter.
-                    if (i < result.schedule.size()) {
-                        // Note: Schedule size is path len - 1 (segments).
-                        // Wait: Logic in Python:
-                        // if i < len(final_path) - 1: final_path[i+1]['schedule'] = step
-                        // So the schedule info is attached to the DESTINATION node of the segment.
 
-                        // We need to set schedule for node at i+1
-                        // Since same object might be in list multiple times (start/end), we MUST clone
-                        // or be careful.
-                        // Let's create a shallow copy for the view list.
+                    if (i < result.schedule.size()) {
+
                         AddressData viewNode = new AddressData(ad.getDisplayName(), ad.getLat(), ad.getLon(), null);
-                        // The node at i+1 gets the schedule info from schedule[i]
-                        // Actually loop in python: for i, step in enumerate(schedule):
-                        // final_path[i+1]...
-                        // Do this after building list.
+
                     }
                     finalPath.add(ad);
                 }
 
-                // Re-build final path with clones to hold schedule
                 List<AddressData> finalPathWithSchedule = new ArrayList<>();
                 for (AddressData ad : finalPath) {
                     finalPathWithSchedule.add(new AddressData(ad.getDisplayName(), ad.getLat(), ad.getLon(), null));
@@ -151,25 +134,50 @@ public class TspController {
             } else {
                 List<RouteResult> results = new ArrayList<>();
 
-                // NN + 2-Opt
-                long start = System.currentTimeMillis();
-                List<Integer> nnPath = solverService.runNearestNeighbor(distMatrix);
-                List<Integer> twoOptPath = solverService.apply2Opt(nnPath, distMatrix);
-                long end = System.currentTimeMillis();
+                long start, end;
 
-                results.add(buildResult("NN + 2-Opt", twoOptPath, allAddressesData, distMatrix, end - start));
+                // Handle specific mode requests or default to comparing all (if mode='distance'
+                // usually we show all?)
+                // Current logic implies 'distance' shows multiple results. Let's keep that but
+                // add A* if specifically asked OR add to comparison.
+                // Requirement: "Add option".
 
-                // NN + 3-Opt
-                start = System.currentTimeMillis();
-                List<Integer> threeOptPath = solverService.run3Opt(distMatrix);
-                end = System.currentTimeMillis();
-                results.add(buildResult("NN + 3-Opt", threeOptPath, allAddressesData, distMatrix, end - start));
+                if ("astar".equals(mode)) {
+                    start = System.currentTimeMillis();
+                    List<Integer> aStarPath = solverService.runAStarSolver(distMatrix);
+                    end = System.currentTimeMillis();
+                    results.add(
+                            buildResult("A* Search (Optimal)", aStarPath, allAddressesData, distMatrix, end - start));
+                } else {
+                    // NN + 2-Opt
+                    start = System.currentTimeMillis();
+                    List<Integer> nnPath = solverService.runNearestNeighbor(distMatrix);
+                    List<Integer> twoOptPath = solverService.apply2Opt(nnPath, distMatrix);
+                    end = System.currentTimeMillis();
 
-                // SA
-                start = System.currentTimeMillis();
-                List<Integer> saPath = solverService.runSaSolver(distMatrix);
-                end = System.currentTimeMillis();
-                results.add(buildResult("Simulated Annealing", saPath, allAddressesData, distMatrix, end - start));
+                    results.add(buildResult("NN + 2-Opt", twoOptPath, allAddressesData, distMatrix, end - start));
+
+                    // NN + 3-Opt
+                    start = System.currentTimeMillis();
+                    List<Integer> threeOptPath = solverService.run3Opt(distMatrix);
+                    end = System.currentTimeMillis();
+                    results.add(buildResult("NN + 3-Opt", threeOptPath, allAddressesData, distMatrix, end - start));
+
+                    // SA
+                    start = System.currentTimeMillis();
+                    List<Integer> saPath = solverService.runSaSolver(distMatrix);
+                    end = System.currentTimeMillis();
+                    results.add(buildResult("Simulated Annealing", saPath, allAddressesData, distMatrix, end - start));
+
+                    // Also Comparison: Add A* if small enough
+                    if (distMatrix.length <= 12) {
+                        start = System.currentTimeMillis();
+                        List<Integer> aStarPath = solverService.runAStarSolver(distMatrix);
+                        end = System.currentTimeMillis();
+                        results.add(buildResult("A* Search (Optimal)", aStarPath, allAddressesData, distMatrix,
+                                end - start));
+                    }
+                }
 
                 results.sort(Comparator.comparingDouble(RouteResult::getDistanceKm));
                 model.addAttribute("results", results);
@@ -203,8 +211,7 @@ public class TspController {
     @ResponseBody
     public Object reroute(@RequestBody Map<String, Object> payload) {
         try {
-            // Need to Deserialize all_addresses_data manually or use DTO.
-            // Payload: { all_addresses_data: [...], avoid_segment: {from: x, to: y} }
+            //
             List<Map<String, Object>> addrMaps = (List<Map<String, Object>>) payload.get("all_addresses_data");
             Map<String, String> avoidMap = (Map<String, String>) payload.get("avoid_segment");
 

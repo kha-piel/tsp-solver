@@ -1,70 +1,118 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ thống Tối ưu Tuyến đường Giao hàng</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-    
+
     <!-- **THƯ VIỆN MỚI**: Thêm Leaflet.PolylineDecorator để vẽ mũi tên -->
     <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        #map { height: 600px; width: 100%; border-radius: 0.5rem; }
-        .leaflet-routing-container, .leaflet-routing-alt { display: none; }
-        .leaflet-control-layers-toggle { background-image: url(https://unpkg.com/leaflet@1.9.4/dist/images/layers.png); }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        #map {
+            height: 600px;
+            width: 100%;
+            border-radius: 0.5rem;
+        }
+
+        .leaflet-routing-container,
+        .leaflet-routing-alt {
+            display: none;
+        }
+
+        .leaflet-control-layers-toggle {
+            background-image: url(https://unpkg.com/leaflet@1.9.4/dist/images/layers.png);
+        }
+
         .overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background-color: rgba(0, 0, 0, 0.6);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 2000; transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.3s ease;
         }
+
         .modal-content {
-            background: white; padding: 2rem; border-radius: 0.75rem;
-            max-width: 500px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            background: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
-        .overlay.visible { opacity: 1; pointer-events: auto; }
-        .hidden-completely { display: none; }
+
+        .overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .hidden-completely {
+            display: none;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body class="bg-gray-100 text-gray-800">
 
     <div class="container mx-auto p-4 md:p-8">
         <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-2">Hệ thống Tối ưu Tuyến đường Thông minh</h1>
+            <h1 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-2">Hệ thống Tối ưu Tuyến đường Thông
+                minh</h1>
             <p class="text-center text-gray-600 mb-8">Hỗ trợ so sánh thuật toán và xử lý các ràng buộc phức tạp.</p>
 
             <form id="main-form" action="/" method="POST" class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
                 <!-- Cột Nhập liệu -->
                 <div>
                     <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Nhập Dữ Liệu</h2>
-                    
+
                     <div class="mb-6">
                         <label class="block text-lg font-medium text-gray-700 mb-2">Chế độ Tối ưu</label>
                         <div class="flex rounded-md shadow-sm">
-                            <button type="button" id="mode-distance-btn" class="mode-btn flex-1 p-2 rounded-l-md border border-gray-300">Tối ưu Quãng đường</button>
-                            <button type="button" id="mode-schedule-btn" class="mode-btn flex-1 p-2 rounded-r-md border border-gray-300">Tối ưu Lịch trình (TSPTW)</button>
+                            <button type="button" id="mode-distance-btn"
+                                class="mode-btn flex-1 p-2 rounded-l-md border border-gray-300">Tối ưu Quãng
+                                đường</button>
+                            <button type="button" id="mode-astar-btn"
+                                class="mode-btn flex-1 p-2 border-t border-b border-gray-300">A* (Optimal)</button>
+                            <button type="button" id="mode-schedule-btn"
+                                class="mode-btn flex-1 p-2 rounded-r-md border border-gray-300">Tối ưu Lịch trình
+                                (TSPTW)</button>
                         </div>
-                        <input type="hidden" name="mode" id="mode-input" th:value="${form_data.mode != null ? form_data.mode : 'distance'}">
+                        <input type="hidden" name="mode" id="mode-input"
+                            th:value="${form_data.mode != null ? form_data.mode : 'distance'}">
                     </div>
 
                     <div id="warehouse-section">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div>
                                 <label class="block text-lg font-medium text-gray-700 mb-2">📍 Địa chỉ Kho hàng</label>
-                                <input type="text" name="warehouse_address" placeholder="Địa chỉ kho" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" th:value="${form_data.warehouseAddress}">
+                                <input type="text" name="warehouse_address" placeholder="Địa chỉ kho" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                    th:value="${form_data.warehouseAddress}">
                             </div>
                             <div id="start-time-section" class="hidden-completely">
                                 <label class="block text-lg font-medium text-gray-700 mb-2">⏰ Giờ xuất phát</label>
-                                <input type="time" name="start_time" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" th:value="${form_data.startTime != null ? form_data.startTime : '08:00'}">
+                                <input type="time" name="start_time"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                    th:value="${form_data.startTime != null ? form_data.startTime : '08:00'}">
                             </div>
                         </div>
                     </div>
@@ -72,80 +120,102 @@
                     <div>
                         <label class="block text-lg font-medium text-gray-700 mb-2">🚚 Các điểm giao hàng</label>
                         <div id="delivery-points-container" class="space-y-3"></div>
-                        <button type="button" id="add-point-btn" class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition">
+                        <button type="button" id="add-point-btn"
+                            class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition">
                             + Thêm điểm giao hàng
                         </button>
                     </div>
                     <div class="mt-8">
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md text-lg transition shadow-md">
+                        <button type="submit"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md text-lg transition shadow-md">
                             🚀 Phân tích & Tối ưu
                         </button>
                     </div>
 
                     <!-- Kết quả dạng text -->
                     <div id="result-wrapper" class="bg-gray-50 p-6 rounded-lg mt-8">
-                         <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Kết quả Phân tích</h2>
+                        <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Kết quả Phân tích</h2>
                         <div id="error-display" class="mb-4">
-                        <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md" role="alert">
-                            <strong class="font-bold">Lỗi!</strong> <span th:text="${error}"></span>
-                        </div>
-                        </div>
-
-                        <div id="result-content">
-                        <!-- Template cho so sánh thuật toán -->
-                        <div th:if="${results}" class="space-y-6">
-                            <div th:each="result, iterStat : ${results}" class="p-4 border rounded-lg"
-                                 th:classappend="${iterStat.first} ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'">
-                                <h3 class="text-lg font-bold text-gray-800">
-                                    <span th:text="${result.name}"></span>
-                                    <span th:if="${iterStat.first}" class="text-sm text-white bg-indigo-500 px-2 py-1 rounded-full">Tốt nhất</span>
-                                </h3>
-                                <div class="mt-2 grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <p class="font-medium text-gray-500">Quãng đường</p>
-                                        <p class="text-xl font-semibold text-indigo-600" th:text="${#numbers.formatDecimal(result.distanceKm, 1, 2) + ' km'}"></p>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium text-gray-500">Thời gian xử lý</p>
-                                        <p class="text-xl font-semibold text-indigo-600" th:text="${#numbers.formatDecimal(result.execTimeMs, 1, 0) + ' ms'}"></p>
-                                    </div>
-                                </div>
-                                <details class="mt-3 text-xs">
-                                    <summary class="cursor-pointer text-gray-600">Xem lộ trình chi tiết</summary>
-                                    <ol class="list-decimal list-inside mt-2 space-y-1 text-gray-700">
-                                        <li th:each="point : ${result.path}" th:title="${point.displayName}" th:text="${#strings.abbreviate(point.displayName, 40)}"></li>
-                                    </ol>
-                                </details>
+                            <div th:if="${error}"
+                                class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md" role="alert">
+                                <strong class="font-bold">Lỗi!</strong> <span th:text="${error}"></span>
                             </div>
                         </div>
 
-                        <!-- Template cho TSPTW -->
-                        <div th:if="${result_tsptw}" class="p-4 border rounded-lg border-teal-500 bg-teal-50">
+                        <div id="result-content">
+                            <!-- Template cho so sánh thuật toán -->
+                            <div th:if="${results}" class="space-y-6">
+                                <div th:each="result, iterStat : ${results}" class="p-4 border rounded-lg"
+                                    th:classappend="${iterStat.first} ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'">
+                                    <h3 class="text-lg font-bold text-gray-800">
+                                        <span th:text="${result.name}"></span>
+                                        <span th:if="${iterStat.first}"
+                                            class="text-sm text-white bg-indigo-500 px-2 py-1 rounded-full">Tốt
+                                            nhất</span>
+                                    </h3>
+                                    <div class="mt-2 grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <p class="font-medium text-gray-500">Quãng đường</p>
+                                            <p class="text-xl font-semibold text-indigo-600"
+                                                th:text="${#numbers.formatDecimal(result.distanceKm, 1, 2) + ' km'}">
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-500">Thời gian xử lý</p>
+                                            <p class="text-xl font-semibold text-indigo-600"
+                                                th:text="${#numbers.formatDecimal(result.execTimeMs, 1, 0) + ' ms'}">
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <details class="mt-3 text-xs">
+                                        <summary class="cursor-pointer text-gray-600">Xem lộ trình chi tiết</summary>
+                                        <ol class="list-decimal list-inside mt-2 space-y-1 text-gray-700">
+                                            <li th:each="point : ${result.path}" th:title="${point.displayName}"
+                                                th:text="${#strings.abbreviate(point.displayName, 40)}"></li>
+                                        </ol>
+                                    </details>
+                                </div>
+                            </div>
+
+                            <!-- Template cho TSPTW -->
+                            <div th:if="${result_tsptw}" class="p-4 border rounded-lg border-teal-500 bg-teal-50">
                                 <h3 class="text-lg font-bold text-gray-800">Lịch trình Tối ưu (TSPTW)</h3>
                                 <div class="mt-2 grid grid-cols-2 gap-4 text-sm">
                                     <div>
                                         <p class="font-medium text-gray-500">Quãng đường</p>
-                                        <p class="text-xl font-semibold text-teal-600" th:text="${#numbers.formatDecimal(distance_km, 1, 2) + ' km'}"></p>
+                                        <p class="text-xl font-semibold text-teal-600"
+                                            th:text="${#numbers.formatDecimal(distance_km, 1, 2) + ' km'}"></p>
                                     </div>
                                     <div>
                                         <p class="font-medium text-gray-500">Tổng thời gian</p>
-                                        <p class="text-xl font-semibold text-teal-600" th:text="${#numbers.formatDecimal(duration_sec/3600.0, 1, 2) + ' giờ'}"></p>
+                                        <p class="text-xl font-semibold text-teal-600"
+                                            th:text="${#numbers.formatDecimal(duration_sec/3600.0, 1, 2) + ' giờ'}"></p>
                                     </div>
                                 </div>
                                 <details class="mt-3 text-xs" open>
-                                    <summary class="cursor-pointer text-gray-600 font-semibold">Xem Lịch trình Chi tiết</summary>
+                                    <summary class="cursor-pointer text-gray-600 font-semibold">Xem Lịch trình Chi tiết
+                                    </summary>
                                     <div class="overflow-x-auto">
                                         <table class="w-full mt-2 text-left whitespace-nowrap">
                                             <thead class="bg-gray-200">
-                                                <tr><th class="p-2">Điểm đến</th><th class="p-2">Đến lúc</th><th class="p-2">Chờ</th><th class="p-2">Rời đi</th></tr>
+                                                <tr>
+                                                    <th class="p-2">Điểm đến</th>
+                                                    <th class="p-2">Đến lúc</th>
+                                                    <th class="p-2">Chờ</th>
+                                                    <th class="p-2">Rời đi</th>
+                                                </tr>
                                             </thead>
                                             <tbody>
-                                            <tr th:each="point, iterStat : ${result_tsptw}" th:if="${!iterStat.first}" class="border-b">
-                                                <td class="p-2" th:title="${point.displayName}" th:text="${#strings.abbreviate(point.displayName, 20)}"></td>
-                                                <td class="p-2 font-mono" th:text="${point.schedule.arrival}"></td>
-                                                <td class="p-2 font-mono text-orange-600" th:text="${point.schedule.wait}"></td>
-                                                <td class="p-2 font-mono" th:text="${point.schedule.departure}"></td>
-                                            </tr>
+                                                <tr th:each="point, iterStat : ${result_tsptw}"
+                                                    th:if="${!iterStat.first}" class="border-b">
+                                                    <td class="p-2" th:title="${point.displayName}"
+                                                        th:text="${#strings.abbreviate(point.displayName, 20)}"></td>
+                                                    <td class="p-2 font-mono" th:text="${point.schedule.arrival}"></td>
+                                                    <td class="p-2 font-mono text-orange-600"
+                                                        th:text="${point.schedule.wait}"></td>
+                                                    <td class="p-2 font-mono" th:text="${point.schedule.departure}">
+                                                    </td>
+                                                </tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -168,10 +238,13 @@
     <div id="reroute-modal" class="overlay hidden-completely opacity-0 pointer-events-none">
         <div class="modal-content text-center">
             <h3 class="text-xl font-bold mb-4">🚧 Cảnh báo Tắc đường!</h3>
-            <p id="modal-text" class="mb-6 text-gray-700">Đoạn đường đang bị tắc. Bạn có muốn tìm tuyến đường thay thế không?</p>
+            <p id="modal-text" class="mb-6 text-gray-700">Đoạn đường đang bị tắc. Bạn có muốn tìm tuyến đường thay thế
+                không?</p>
             <div class="flex justify-center gap-4">
-                <button type="button" id="cancel-reroute-btn" class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md font-semibold">Hủy</button>
-                <button type="button" id="confirm-reroute-btn" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-semibold">Đồng ý</button>
+                <button type="button" id="cancel-reroute-btn"
+                    class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md font-semibold">Hủy</button>
+                <button type="button" id="confirm-reroute-btn"
+                    class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-semibold">Đồng ý</button>
             </div>
         </div>
     </div>
@@ -180,36 +253,27 @@
             <h3 class="text-xl font-bold mb-4">Đang xử lý...</h3>
             <p class="text-gray-600 mb-4">Hệ thống đang tìm kiếm tuyến đường tối ưu, vui lòng chờ trong giây lát.</p>
             <div class="w-full bg-gray-200 rounded-full h-4">
-                <div id="progress-bar" class="bg-indigo-600 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+                <div id="progress-bar" class="bg-indigo-600 h-4 rounded-full transition-all duration-500"
+                    style="width: 0%"></div>
             </div>
         </div>
     </div>
-    
-    <!-- Data Islands -->
-    <!-- Serialization helper in Thymeleaf/Spring is tricky for JS integration. We can manual JSON strings via ObjectMapper in Controller and put into model, or try to serialize here. -->
-    <!-- Assuming we add new model attributes 'results_json', 'form_data_json' etc in Controller would be cleaner, but let's try inline JS generation if ObjectMapper is not readily available in view. -->
-    <!-- Better approach: The Java objects serialize to JSON naturally via Jackson if we invoke an endpoint, but here we render HTML. -->
-    <!-- We will rely on th:utext to inject a JSON string prepared by the Controller or just manual object mapping if simple. -->
-    
-    <!-- Since I didn't add JSON strings to the model in the controller, I'll rely on a custom utility or assumption that we can't easily do it without modification. -->
-    <!-- ACTUALLY, let's fix the Controller to add these JSON strings to the model. It's safer. Note in next step I might update controller or accept that the client side JS needs these. -->
-    <!-- For now, I will write the Script tag assuming variables `resultsJson`, `formDataJson` etc are in the model. I will do a quick update to the controller next to ensure they are there. -->
-    
+
     <script th:inline="javascript">
-    /*<![CDATA[*/
+        /*<![CDATA[*/
         // We will read these from hidden elements or construct them if possible.
         // Or simpler: Standard Thymeleaf javascript inlining.
-        
+
         var formData = /*[[${form_data}]]*/ {};
         var resultsData = /*[[${results}]]*/ null;
         var tsptwResult = /*[[${result_tsptw}]]*/ null;
         var allAddressesData = /*[[${all_addresses_data}]]*/ null;
-        
+
         // The above works if Jackson is on classpath and Spring configured correctly, but Thymeleaf generic serialization is limited.
         // Often 'th:inline="javascript"' produces correct JSON for POJOs.
-    /*]]>*/
+        /*]]>*/
     </script>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             let map;
@@ -240,7 +304,7 @@
             }
 
             document.getElementById('main-form').addEventListener('submit', showLoading);
-            
+
             const container = document.getElementById('delivery-points-container');
             const addBtn = document.getElementById('add-point-btn');
             let pointCounter = 0;
@@ -271,7 +335,7 @@
             };
 
             addBtn.addEventListener('click', () => addPointInput());
-            
+
             // Use variables from th:inline
             if (formData && formData.deliveryPoints) {
                 formData.deliveryPoints.forEach(point => addPointInput(point));
@@ -279,24 +343,32 @@
 
             const modeInput = document.getElementById('mode-input');
             const modeDistanceBtn = document.getElementById('mode-distance-btn');
+            const modeAstarBtn = document.getElementById('mode-astar-btn');
             const modeScheduleBtn = document.getElementById('mode-schedule-btn');
             const startTimeSection = document.getElementById('start-time-section');
-            
+
             function setMode(mode) {
                 modeInput.value = mode;
+                // Reset all
+                modeDistanceBtn.classList.remove('bg-indigo-600', 'text-white');
+                modeAstarBtn.classList.remove('bg-indigo-600', 'text-white');
+                modeScheduleBtn.classList.remove('bg-indigo-600', 'text-white');
+
+                startTimeSection.classList.add('hidden-completely');
+                document.querySelectorAll('.time-window-inputs').forEach(el => el.classList.add('hidden-completely')); // Hide time inputs by default
+
                 if (mode === 'schedule') {
                     modeScheduleBtn.classList.add('bg-indigo-600', 'text-white');
-                    modeDistanceBtn.classList.remove('bg-indigo-600', 'text-white');
                     startTimeSection.classList.remove('hidden-completely');
                     document.querySelectorAll('.time-window-inputs').forEach(el => el.classList.remove('hidden-completely'));
-                } else {
+                } else if (mode === 'astar') {
+                    modeAstarBtn.classList.add('bg-indigo-600', 'text-white');
+                } else { // Default to distance
                     modeDistanceBtn.classList.add('bg-indigo-600', 'text-white');
-                    modeScheduleBtn.classList.remove('bg-indigo-600', 'text-white');
-                    startTimeSection.classList.add('hidden-completely');
-                    document.querySelectorAll('.time-window-inputs').forEach(el => el.classList.add('hidden-completely'));
                 }
             }
             modeDistanceBtn.addEventListener('click', () => setMode('distance'));
+            modeAstarBtn.addEventListener('click', () => setMode('astar'));
             modeScheduleBtn.addEventListener('click', () => setMode('schedule'));
             setMode(formData.mode || 'distance');
 
@@ -320,20 +392,20 @@
                 resultsData.forEach((result, index) => {
                     const routeLayer = L.layerGroup();
                     const waypoints = result.path.map(p => L.latLng(p.lat, p.lon));
-                    
+
                     const routingControl = L.Routing.control({
                         waypoints: waypoints,
                         routeWhileDragging: false, show: false, addWaypoints: false,
-                        lineOptions: { styles: [{opacity: 0, weight: 1}] },
+                        lineOptions: { styles: [{ opacity: 0, weight: 1 }] },
                         createMarker: () => null
                     }).addTo(map);
 
-                    routingControl.on('routesfound', function(e) {
+                    routingControl.on('routesfound', function (e) {
                         const route = e.routes[0];
                         const waypointIndices = route.waypointIndices;
 
                         for (let i = 0; i < waypointIndices.length - 1; i++) {
-                            const legCoordinates = route.coordinates.slice(waypointIndices[i], waypointIndices[i+1] + 1);
+                            const legCoordinates = route.coordinates.slice(waypointIndices[i], waypointIndices[i + 1] + 1);
                             const legPolyline = L.polyline(legCoordinates, {
                                 color: colors[index % colors.length], weight: 6, opacity: 0.8
                             }).addTo(routeLayer);
@@ -351,13 +423,13 @@
                                 }]
                             }).addTo(routeLayer);
 
-                            legPolyline.on('mouseover', function() { this.setStyle({ weight: 10, opacity: 1 }); });
-                            legPolyline.on('mouseout', function() { this.setStyle({ weight: 6, opacity: 0.8 }); });
-                            
+                            legPolyline.on('mouseover', function () { this.setStyle({ weight: 10, opacity: 1 }); });
+                            legPolyline.on('mouseout', function () { this.setStyle({ weight: 6, opacity: 0.8 }); });
+
                             if (formData.mode !== 'schedule') {
-                                legPolyline.on('click', function() {
+                                legPolyline.on('click', function () {
                                     const fromAddress = result.path[i];
-                                    const toAddress = result.path[i+1];
+                                    const toAddress = result.path[i + 1];
                                     if (fromAddress && toAddress) {
                                         showRerouteModal(fromAddress.display_name, toAddress.display_name);
                                     }
@@ -386,7 +458,7 @@
                 }
                 Object.values(overlayMaps).forEach(layer => map.addLayer(layer));
             }
-            
+
             const modal = document.getElementById('reroute-modal');
             const confirmBtn = document.getElementById('confirm-reroute-btn');
             const cancelBtn = document.getElementById('cancel-reroute-btn');
@@ -414,7 +486,7 @@
                 const from = confirmBtn.dataset.from;
                 const to = confirmBtn.dataset.to;
                 // use global variable from th:inline
-                
+
                 try {
                     const response = await fetch('/reroute', {
                         method: 'POST',
@@ -424,12 +496,12 @@
                             avoid_segment: { from: from, to: to }
                         })
                     });
-                    
+
                     if (!response.ok) {
                         const errorData = await response.json().catch(() => ({ error: `Lỗi máy chủ: ${response.statusText}` }));
                         throw new Error(errorData.error || 'Lỗi không xác định từ server.');
                     }
-                    
+
                     const newData = await response.json();
                     updateUIAfterReroute(newData);
 
@@ -442,8 +514,7 @@
             });
 
             function updateUIAfterReroute(rerouteData) {
-                // Update text result is harder in Thymeleaf pure static, but we can do it via JS or reload.
-                // The original code uses JS to inject HTML.
+
                 const resultContent = document.getElementById('result-content');
                 resultContent.innerHTML = `
                     <div class="p-4 border rounded-lg border-orange-500 bg-orange-50">
@@ -468,9 +539,9 @@
                 `;
                 drawRoutes([rerouteData], true);
             }
-            
+
             initializeMap();
-            
+
             if (resultsData) {
                 drawRoutes(resultsData);
             } else if (tsptwResult) {
@@ -479,4 +550,5 @@
         });
     </script>
 </body>
+
 </html>

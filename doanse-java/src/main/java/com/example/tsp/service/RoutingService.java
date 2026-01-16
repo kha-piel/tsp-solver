@@ -22,8 +22,8 @@ public class RoutingService {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class RoutingMatrix {
-        private double[][] distances; // meters
-        private double[][] durations; // seconds
+        private double[][] distances;
+        private double[][] durations;
     }
 
     public RoutingMatrix getRouteInfo(List<AddressData> locations) {
@@ -39,11 +39,11 @@ public class RoutingService {
                 if (response != null) {
                     ObjectMapper mapper = new ObjectMapper();
                     JsonNode root = mapper.readTree(response);
-                    
+
                     if ("Ok".equals(root.path("code").asText())) {
                         JsonNode distNode = root.get("distances");
                         JsonNode durNode = root.get("durations");
-                        
+
                         int size = distNode.size();
                         double[][] distances = new double[size][size];
                         double[][] durations = new double[size][size];

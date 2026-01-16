@@ -13,8 +13,7 @@ public class AddressData {
     private String displayName;
     private double lat;
     private double lon;
-    
-    // Optional schedule info for TSPTW results
+
     private ScheduleInfo schedule;
 
     @Data
