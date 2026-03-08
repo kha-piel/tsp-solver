@@ -60,7 +60,7 @@ scoop install maven
 ### Chạy ứng dụng
 
 ```bash
-# Clone repo
+
 git clone https://github.com/<YOUR_USERNAME>/tsp-solver.git
 cd tsp-solver/doanse-java
 
