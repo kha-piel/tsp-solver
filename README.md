@@ -49,11 +49,11 @@ src/main/java/com/example/tsp/
 
 ### Cài Maven (nếu chưa có) — Windows
 ```powershell
-# Cài Scoop (package manager)
+
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 
-# Mở terminal MỚI, sau đó cài Maven
+
 scoop install maven
 ```
 
@@ -64,7 +64,7 @@ scoop install maven
 git clone https://github.com/<YOUR_USERNAME>/tsp-solver.git
 cd tsp-solver/doanse-java
 
-# Chạy với Spring Boot Maven Plugin
+
 mvn spring-boot:run
 ```
 
@@ -73,10 +73,10 @@ mvn spring-boot:run
 ### Tùy chỉnh cổng
 
 ```bash
-# Chạy trên cổng khác (ví dụ: 9000)
+
 PORT=9000 mvn spring-boot:run
 
-# Windows PowerShell
+
 $env:PORT = "9000"; mvn spring-boot:run
 ```
 
@@ -85,10 +85,10 @@ $env:PORT = "9000"; mvn spring-boot:run
 ## 🐳 Chạy Bằng Docker
 
 ```bash
-# Build image
+
 docker build -t tsp-solver .
 
-# Chạy container
+
 docker run -p 8081:8081 tsp-solver
 ```
 
