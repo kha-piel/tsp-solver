@@ -136,12 +136,6 @@ public class TspController {
 
                 long start, end;
 
-                // Handle specific mode requests or default to comparing all (if mode='distance'
-                // usually we show all?)
-                // Current logic implies 'distance' shows multiple results. Let's keep that but
-                // add A* if specifically asked OR add to comparison.
-                // Requirement: "Add option".
-
                 if ("astar".equals(mode)) {
                     start = System.currentTimeMillis();
                     List<Integer> aStarPath = solverService.runAStarSolver(distMatrix);
@@ -169,7 +163,6 @@ public class TspController {
                     end = System.currentTimeMillis();
                     results.add(buildResult("Simulated Annealing", saPath, allAddressesData, distMatrix, end - start));
 
-                    // Also Comparison: Add A* if small enough
                     if (distMatrix.length <= 12) {
                         start = System.currentTimeMillis();
                         List<Integer> aStarPath = solverService.runAStarSolver(distMatrix);

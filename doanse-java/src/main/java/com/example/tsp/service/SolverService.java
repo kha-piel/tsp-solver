@@ -70,7 +70,6 @@ public class SolverService {
                     if (j == i + 1)
                         continue;
 
-                    // Distance check
                     double distAC = distMatrix[bestPath.get(i - 1)][bestPath.get(i)];
                     double distBD = distMatrix[bestPath.get(j - 1)][bestPath.get(j)];
                     double distCurrent = distAC + distBD;
@@ -104,7 +103,6 @@ public class SolverService {
                         if (k == bestPath.size() - 1)
                             continue;
 
-                        // Indices logic A..B...C..D...E..F
                         int A = bestPath.get(i - 1), B = bestPath.get(i);
                         int C = bestPath.get(j - 1), D = bestPath.get(j);
                         int E = bestPath.get(k - 1), F = bestPath.get(k);
@@ -149,9 +147,8 @@ public class SolverService {
             currentSolution.add(i);
         Collections.shuffle(currentSolution);
 
-        // Add start/end
-        currentSolution.add(0, 0); // start
-        currentSolution.add(0); // end
+        currentSolution.add(0, 0);
+        currentSolution.add(0);
 
         double currentCost = calculateTotalDistance(currentSolution, distMatrix);
         List<Integer> bestSolution = new ArrayList<>(currentSolution);
@@ -328,9 +325,9 @@ public class SolverService {
     private static class AStarNode implements Comparable<AStarNode> {
         int currentCity;
         int visitedMask;
-        double gCost; // Cost from start
-        double hCost; // Heuristic (MST of unvisited)
-        double fCost; // g + h
+        double gCost;
+        double hCost;
+        double fCost;
         AStarNode parent;
 
         @Override
@@ -341,19 +338,14 @@ public class SolverService {
 
     public List<Integer> runAStarSolver(double[][] distMatrix) {
         int numLocations = distMatrix.length;
-        // Limit for A* because it's exact and slow O(n^2 * 2^n)
         if (numLocations > 15) {
-            // Fallback to SA or others for large inputs if requested via A*
             return runSaSolver(distMatrix);
         }
 
         PriorityQueue<AStarNode> openSet = new PriorityQueue<>();
-        // Visited states: key = "currentCity_visitedMask", value = gCost
-        // If we reach same state with higher gCost, skip.
         Map<String, Double> visitedStates = new HashMap<>();
 
-        // Start at 0
-        int startMask = 1; // 0th bit set
+        int startMask = 1;
         AStarNode startNode = new AStarNode(0, startMask, 0, 0, 0, null);
         startNode.setHCost(calculateMSTHeuristic(startMask, numLocations, distMatrix));
         startNode.setFCost(startNode.getGCost() + startNode.getHCost());
@@ -364,16 +356,10 @@ public class SolverService {
         while (!openSet.isEmpty()) {
             AStarNode current = openSet.poll();
 
-            // Goal check: All cities visited and returned to start
             if (current.visitedMask == (1 << numLocations) - 1) {
                 if (current.currentCity == 0) {
                     return reconstructPath(current);
                 } else {
-                    // Since we need to return to start, the only valid next move from full mask is
-                    // to 0.
-                    // But strictly speaking, TSP cycle visits every city exactly once.
-                    // If we are at the last unvisited city, mask becomes full.
-                    // Then we take edge back to 0.
                     double distToStart = distMatrix[current.currentCity][0];
                     double totalCost = current.gCost + distToStart;
                     AStarNode endNode = new AStarNode(0, current.visitedMask, totalCost, 0, totalCost, current);
@@ -381,7 +367,6 @@ public class SolverService {
                 }
             }
 
-            // Expand neighbors
             boolean allVisited = (current.visitedMask == ((1 << numLocations) - 1));
 
             if (allVisited && current.currentCity != 0) {
@@ -397,7 +382,7 @@ public class SolverService {
                 }
             } else if (!allVisited) {
                 for (int nextCity = 0; nextCity < numLocations; nextCity++) {
-                    if ((current.visitedMask & (1 << nextCity)) == 0) { // Not visited yet
+                    if ((current.visitedMask & (1 << nextCity)) == 0) {
                         double newGCost = current.gCost + distMatrix[current.currentCity][nextCity];
                         int newMask = current.visitedMask | (1 << nextCity);
 
@@ -426,9 +411,6 @@ public class SolverService {
             node = node.parent;
         }
         Collections.reverse(path);
-        // Ensure path ends with 0 if it doesn't (though reconstructFromLastNode usually
-        // handles it)
-        // If logic creates 0 -> ... -> 0, it's correct.
         return path;
     }
 
@@ -443,7 +425,6 @@ public class SolverService {
         if (unvisited.isEmpty())
             return 0;
 
-        // Prim's MST for unvisited
         double mstCost = 0;
         if (unvisited.size() > 1) {
             Set<Integer> mstIncluded = new HashSet<>();
@@ -476,11 +457,6 @@ public class SolverService {
             }
         }
 
-        // Heuristic Enhancement: Add cheapest edge from CURRENT city to any in MST
-        // and cheapest edge from START (0) to any in MST
-        // But currentCity is not available in this method signature easily unless
-        // passed cost?
-        // Or we just rely on Basic MST. Basic MST is admissible.
         return mstCost;
     }
 }

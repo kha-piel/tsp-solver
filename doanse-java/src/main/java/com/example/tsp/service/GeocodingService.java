@@ -52,9 +52,7 @@ public class GeocodingService {
             if (idx > 0) {
 
                 char charBefore = address.charAt(idx - 1);
-                if (charBefore != ',' && charBefore != ' ') {
-                    // e.g. "phudanang" -> ignore
-                } else if (charBefore == ' ') {
+                if (charBefore == ' ') {
                     return address.substring(0, idx).trim() + ", " + address.substring(idx);
                 }
             }
@@ -75,7 +73,7 @@ public class GeocodingService {
         String url = builder.build().toUriString();
 
         try {
-            System.out.println("DEBUG: Querying Nominatim: " + url);
+
             ResponseEntity<String> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
